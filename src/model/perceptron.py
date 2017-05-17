@@ -79,12 +79,13 @@ class Perceptron(Classifier):
             self.errors.append(epoch_errors)
 
             if verbose:
+                total_errors = sum([len(i) for i in self.errors])
                 __verbose({
                     'epoch': _,
                     'errors': len(epoch_errors),
                     'percentage': len(epoch_errors) / len(self.trainingSet.input) * 100,
-                    'total_errors': sum([len(i) for i in self.errors]),
-                    'mean': sum([len(i) for i in self.errors]) / len(self.trainingSet.input)
+                    'total_errors': total_errors,
+                    'mean': total_errors / len(self.trainingSet.input)
                 })
 
     def classify(self, testInstance):
