@@ -4,9 +4,10 @@ import sys
 import logging
 
 import numpy as np
-
+import pprint
 from util.activation_functions import Activation
 from model.classifier import Classifier
+from util.loss_functions import DifferentError
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.DEBUG,
@@ -47,6 +48,8 @@ class Perceptron(Classifier):
         # Initialize the weight vector with small random values
         # around 0 and0.1
         self.weight = np.random.rand(self.trainingSet.input.shape[1])/100
+        self.error = DifferentError()
+        self.errors = []
 
     def train(self, verbose=True):
         """Train the perceptron with the perceptron learning algorithm.
@@ -58,7 +61,31 @@ class Perceptron(Classifier):
         """
         
         # Write your code to train the perceptron here
-        pass
+
+        def __verbose(message_dict): # message is a dict
+            logging.debug(pprint.pformat(message_dict))
+
+        for _ in range(self.epochs):
+            epoch_errors = []
+            for label, target in zip(self.trainingSet.label, self.trainingSet.input):  # iterating over classification label and input data input
+                evaluate = self.fire(target)
+                error = self.error.calculateError(label, evaluate)
+
+                if error != 0:
+                    epoch_errors.append(error)
+
+                    for i, v in enumerate(target):
+                        self.weight[i] += self.learningRate * error * v
+            self.errors.append(epoch_errors)
+
+            if verbose:
+                __verbose({
+                    'epoch': _,
+                    'errors': len(epoch_errors),
+                    'percentage': len(epoch_errors) / len(self.trainingSet.input) * 100,
+                    'total_errors': sum([len(i) for i in self.errors]),
+                    'mean': sum([len(i) for i in self.errors]) / len(self.trainingSet.input)
+                })
 
     def classify(self, testInstance):
         """Classify a single instance.
@@ -73,7 +100,7 @@ class Perceptron(Classifier):
             True if the testInstance is recognized as a 7, False otherwise.
         """
         # Write your code to do the classification on an input image
-        pass
+        return self.fire(testInstance)
 
     def evaluate(self, test=None):
         """Evaluate a whole dataset.
