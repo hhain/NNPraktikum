@@ -64,7 +64,7 @@ class Perceptron(Classifier):
         # Write your code to train the perceptron here
 
         evaluator = Evaluator()
-        
+
         for _ in range(self.epochs):
 
             for label, target in zip(self.trainingSet.label, self.trainingSet.input):
