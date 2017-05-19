@@ -4,10 +4,11 @@ import sys
 import logging
 
 import numpy as np
-import pprint
 from util.activation_functions import Activation
-from model.classifier import Classifier
 from util.loss_functions import DifferentError
+from model.classifier import Classifier
+from report.evaluator import Evaluator
+from sklearn.metrics import accuracy_score
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s',
                     level=logging.DEBUG,
@@ -35,8 +36,8 @@ class Perceptron(Classifier):
     testSet : list
     weight : list
     """
-    def __init__(self, train, valid, test, 
-                                    learningRate=0.01, epochs=50):
+    def __init__(self, train, valid, test,
+                 learningRate=0.01, epochs=50):
 
         self.learningRate = learningRate
         self.epochs = epochs
@@ -49,7 +50,7 @@ class Perceptron(Classifier):
         # around 0 and0.1
         self.weight = np.random.rand(self.trainingSet.input.shape[1])/100
         self.error = DifferentError()
-        self.errors = []
+        # self.errors = []
 
     def train(self, verbose=True):
         """Train the perceptron with the perceptron learning algorithm.
@@ -59,34 +60,20 @@ class Perceptron(Classifier):
         verbose : boolean
             Print logging messages with validation accuracy if verbose is True.
         """
-        
+
         # Write your code to train the perceptron here
 
-        def __verbose(message_dict): # message is a dict
-            logging.debug(pprint.pformat(message_dict))
-
+        evaluator = Evaluator()
+        
         for _ in range(self.epochs):
-            epoch_errors = []
-            for label, target in zip(self.trainingSet.label, self.trainingSet.input):  # iterating over classification label and input data input
+
+            for label, target in zip(self.trainingSet.label, self.trainingSet.input):
                 evaluate = self.fire(target)
                 error = self.error.calculateError(label, evaluate)
-
-                if error != 0:
-                    epoch_errors.append(error)
-
-                    for i, v in enumerate(target):
-                        self.weight[i] += self.learningRate * error * v
-            self.errors.append(epoch_errors)
+                self.updateWeights(target, error)
 
             if verbose:
-                total_errors = sum([len(i) for i in self.errors])
-                __verbose({
-                    'epoch': _,
-                    'errors': len(epoch_errors),
-                    'percentage': len(epoch_errors) / len(self.trainingSet.input) * 100,
-                    'total_errors': total_errors,
-                    'mean': total_errors / len(self.trainingSet.input)
-                })
+                evaluator.printAccuracy(self.validationSet, self.evaluate(self.validationSet.input))
 
     def classify(self, testInstance):
         """Classify a single instance.
@@ -124,8 +111,8 @@ class Perceptron(Classifier):
 
     def updateWeights(self, input, error):
         # Write your code to update the weights of the perceptron here
-        pass
-         
+        self.weight += self.learningRate*error*input
+
     def fire(self, input):
         """Fire the output of the perceptron corresponding to the input """
         return Activation.sign(np.dot(np.array(input), self.weight))
